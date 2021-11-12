@@ -328,11 +328,11 @@ const port = process.env.PORT || 4000;
 server.listen(port, () => console.log("our server have started"));
 
 io.on("connection", (socket) => {
-  // console.log('id',socket.id)
+  console.log('id',socket.id)
 
   socket.on("join-room", (roomID, userId) => {
     // console.log('room',roomID)
-    console.log("user", userId);
+    // console.log("user", userId);
     socket.join(roomID);
     socket.to(roomID).emit("user-connected", userId, socket.id);
     socket.emit("prepareData");
@@ -342,6 +342,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on('disconnect',(reason)=>{
-console.log(reason," ",socket.id)
+// console.log(reason," ",socket.id)
   })
 });
