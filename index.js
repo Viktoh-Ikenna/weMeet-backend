@@ -26,8 +26,10 @@ app.set("trust proxy", true);
 app.use(cors());
 
 io.origins((origin, callback) => {
+  const url="https://wemeet-6ad38.web.app/";
+  // const url="http://localhost:3000";
   // console.log(origin)
-  if (origin !== "http://localhost:3000") {
+  if (origin !== url) {
     return callback("origin not allowed", false);
   }
   callback(null, true);
