@@ -7,7 +7,7 @@ const io = require("socket.io")(server, {
   transports: ["websocket", "polling"],
   allowUpgrades: true,
   upgrade: false,
-  SameSite:Lax
+  cookie: false,
 });
 const { v4: uuid4 } = require("uuid");
 const { ExpressPeerServer } = require("peer");
