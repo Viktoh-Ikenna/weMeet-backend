@@ -26,8 +26,8 @@ app.set("trust proxy", true);
 app.use(cors());
 
 io.origins((origin, callback) => {
-  const url="https://wemeet-6ad38.web.app";
-  // const url="http://localhost:3000";
+  // const url="https://wemeet-6ad38.web.app";
+  const url="http://localhost:3000";
   // console.log(origin)
   if (origin !== url) {
     return callback("origin not allowed", false);
@@ -328,13 +328,13 @@ const port = process.env.PORT || 4000;
 server.listen(port, () => console.log("our server have started"));
 
 io.on("connection", (socket) => {
-  console.log('id',socket.id)
+  // console.log('id',socket.id)
 
-  socket.on("join-room", (roomID, userId) => {
+  socket.on("join-room", (roomID, userId,video) => {
     // console.log('room',roomID)
-    // console.log("user", userId);
+    // console.log("video", video);
     socket.join(roomID);
-    socket.to(roomID).emit("user-connected", userId, socket.id);
+    socket.to(roomID).emit("user-connected", userId,video);
     socket.emit("prepareData");
     socket.on("sent-message", () => {
       socket.to(roomID).emit("update-message", roomID);
