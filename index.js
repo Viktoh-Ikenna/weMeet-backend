@@ -2,8 +2,8 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io")(server, {
-  pingTimeout: 5000,
-  pingInterval: 5000,
+  pingTimeout: 180000,
+  pingInterval: 25000,
   transports: ["websocket", "polling"],
   allowUpgrades: true,
   upgrade: false,
@@ -25,9 +25,22 @@ app.set("trust proxy", true);
 
 app.use(cors());
 
+dotenv.config({ path: "./.env" });
+const dbUrl = process.env.DATABASE_CON.replace(
+  "<password>",
+  process.env.DATABASE_PASS
+);
+
+console.log(process.env.NODE_ENV)
+
 io.origins((origin, callback) => {
-  // const url="https://wemeet-6ad38.web.app";
-  const url="http://localhost:3000";
+  let url;
+  if(process.env.NODE_ENV==="development"){
+    url="http://localhost:3000";
+  }else{
+    url="https://wemeet-6ad38.web.app";
+  }
+  
   // console.log(origin)
   if (origin !== url) {
     return callback("origin not allowed", false);
@@ -35,11 +48,6 @@ io.origins((origin, callback) => {
   callback(null, true);
 });
 
-dotenv.config({ path: "./.env" });
-const dbUrl = process.env.DATABASE_CON.replace(
-  "<password>",
-  process.env.DATABASE_PASS
-);
 
 //applying middlewares
 
@@ -330,11 +338,11 @@ server.listen(port, () => console.log("our server have started"));
 io.on("connection", (socket) => {
   // console.log('id',socket.id)
 
-  socket.on("join-room", (roomID, userId,video) => {
+  socket.on("join-room", (roomID, userId,video,audio) => {
     // console.log('room',roomID)
     // console.log("video", video);
     socket.join(roomID);
-    socket.to(roomID).emit("user-connected", userId,video);
+    socket.to(roomID).emit("user-connected", userId,video,audio);
     socket.emit("prepareData");
     socket.on("sent-message", () => {
       socket.to(roomID).emit("update-message", roomID);
