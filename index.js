@@ -31,7 +31,7 @@ const dbUrl = process.env.DATABASE_CON.replace(
   process.env.DATABASE_PASS
 );
 
-console.log(process.env.NODE_ENV)
+// console.log(process.env.NODE_ENV)
 
 io.origins((origin, callback) => {
   let url;
@@ -105,6 +105,8 @@ const peerServer = ExpressPeerServer(server, {
 });
 
 app.use("/peerjs", peerServer);
+
+
 
 // ||==============================================||
 // ||                                              ||
@@ -289,9 +291,9 @@ app.post("/google", async (req, res) => {
 
 app.get("/google/:id", async (req, res) => {
   try {
-    console.log(req.params.id);
+    // console.log(req.params.id);
     const user = await google.findOne({ uid: req.params.id });
-    console.log(user);
+    // console.log(user);
     if (user) {
       const token = await jwt.sign({ id: user.uid }, process.env.TOKEN_KEY, {
         expiresIn: "90d",
@@ -338,7 +340,7 @@ app.get("/google-email/:email", async (req, res) => {
 
 app.post("/loging-w-pass/", async (req, res) => {
   try {
-    console.log(req.body.password);
+    // console.log(req.body.password);
     let password=req.body.password;
     let Email=req.body.email;
     const user = await google.findOne({ Email, password });
@@ -381,12 +383,14 @@ app.use("/api", router);
 const port = process.env.PORT || 4000;
 server.listen(port, () => console.log("our server have started"));
 
+
+   ////SOCKET CONNECTION///////////////
 io.on("connection", (socket) => {
   // console.log('id',socket.id)
 
+
+     ////SOCKET JOINING ROOM///////////////
   socket.on("join-room", (roomID, userId,video,audio) => {
-    console.log('room',roomID)
-    // console.log("video", video);
     socket.join(roomID);
     socket.to(roomID).emit("user-connected", userId,video,audio);
     socket.emit("prepareData");
@@ -394,9 +398,16 @@ io.on("connection", (socket) => {
       socket.to(roomID).emit("update-message", roomID);
     });
   });
-socket.on('peerDisconnect',(data)=>{
-  console.log("peerdisc",data)
-})
+
+
+
+  ////REMOVING VIDEO AFTER PEER DISCONENCTION //////
+  peerServer.on('disconnect', (client) => { 
+    socket.emit('removeVideo',client.id)
+   });
+
+
+   ////SOCKET DISCONNECTION///////////////
   socket.on('disconnect',(reason)=>{
 // console.log(reason," ",socket.id)
   })
