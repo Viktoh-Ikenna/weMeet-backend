@@ -66,9 +66,10 @@ const GoogleSignupSchema = new mongoose.Schema({
   Email: String,
   uid: String,
   image: String,
+  password: String,
 });
 const UserSchema = new mongoose.Schema({
-  name: String,
+  FullName: String,
   Email: String,
   password: String,
 });
@@ -77,7 +78,7 @@ const MeetingSchema = new mongoose.Schema({
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Google" },
   participant: [
     {
-      name: String,
+      FullName: String,
       email: String,
       approved: Boolean,
       id: String,
@@ -257,9 +258,11 @@ app.post("/google", async (req, res) => {
       screenName: FullNameG,
       photoUrl: image,
       localId: uid,
+      password
+
     } = req.body;
     //   console.log(Email, FullName || FullNameG, image, uid);
-    const savedGoogle = await google.create({ Email, FullName, image, uid });
+    const savedGoogle = await google.create({ Email, FullName, image, uid ,password});
     const token = await jwt.sign(
       { id: savedGoogle.uid },
       process.env.TOKEN_KEY,
@@ -314,6 +317,49 @@ app.get("/google/:id", async (req, res) => {
   }
 });
 
+//CHECK EXISTING BY EMAIL...
+
+app.get("/google-email/:email", async (req, res) => {
+  try {
+    const user = await google.findOne({ Email:req.params.email });
+    if (user) {
+      res.json({
+        state: "existing",
+      });
+    } else {
+      res.json({ state: "save" });
+    }
+  } catch (error) {
+    res.json({ state: "failed" });
+  }
+});
+
+//LOGININ IN WITH PASSSWORD...
+
+app.post("/loging-w-pass/", async (req, res) => {
+  try {
+    console.log(req.body.password);
+    let password=req.body.password;
+    let Email=req.body.email;
+    const user = await google.findOne({ Email, password });
+  
+    if (user) {
+      const token = await jwt.sign({ id: user.uid }, process.env.TOKEN_KEY, {
+        expiresIn: "90d",
+      });
+      res.json({
+        state: "existing",
+        token
+      });
+    } else {
+      res.json({ state: "save" });
+    }
+  } catch (error) {
+    res.json({ state: "failed" });
+  }
+});
+
+
 /// for facebook
 app.post("/facebook", async (req, res) => {
   try {
@@ -339,7 +385,7 @@ io.on("connection", (socket) => {
   // console.log('id',socket.id)
 
   socket.on("join-room", (roomID, userId,video,audio) => {
-    // console.log('room',roomID)
+    console.log('room',roomID)
     // console.log("video", video);
     socket.join(roomID);
     socket.to(roomID).emit("user-connected", userId,video,audio);
@@ -348,7 +394,9 @@ io.on("connection", (socket) => {
       socket.to(roomID).emit("update-message", roomID);
     });
   });
-
+socket.on('peerDisconnect',(data)=>{
+  console.log("peerdisc",data)
+})
   socket.on('disconnect',(reason)=>{
 // console.log(reason," ",socket.id)
   })
